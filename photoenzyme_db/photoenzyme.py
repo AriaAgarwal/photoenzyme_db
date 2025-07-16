@@ -1,5 +1,8 @@
 import pandas as pd
 import sqlite3
+import cirpy
+import re
+
 def read_data():
     photo_df = pd.read_csv("photo_data.csv")
     enzyme_df = photo_df[["protein_sequence", "enzyme_classification", "uniprot_id", "pdb_id", "alphafold_id"]]
@@ -8,6 +11,19 @@ def read_data():
                             "ph_condition", "temp_celsius", "substrate_concentration", "solvent", "enzyme_loading",
                             "reaction_time", "citation"]]
     return photo_df, enzyme_df, reaction_df
+
+def iupac_to_smiles(reaction_df):
+    clean_df = reaction_df[reaction_df["ee"].notna()]
+    iupac_names = clean_df["product"]
+    smile_list = []
+
+    for name in iupac_names:
+        split_name = re.split(r', (?=\S|$)', name)
+        for individual_product in split_name:
+            smile = cirpy.resolve(individual_product, 'smiles')
+            smile_list.append(smile)
+            print(individual_product, smile)
+
 
 def create_db(photo_df, enzyme_df, reaction_df):
 
@@ -46,8 +62,8 @@ def verify_db(photo_db):
 
 
 def main():
-
     photo_df, enzyme_df, reaction_df = read_data()
+    updated_reaction_df = iupac_to_smiles(reaction_df)
     photo_db = create_db(photo_df, enzyme_df, reaction_df)
     verify_db(photo_db)
 
