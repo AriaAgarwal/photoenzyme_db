@@ -14,14 +14,14 @@ def read_data():
 
 def iupac_to_smiles(reaction_df):
     clean_df = reaction_df[reaction_df["ee"].notna()]
-    iupac_names = clean_df["product"]
-    smile_list = []
+    product_iupac_names = clean_df["product"]
+    product_smile_list = []
 
-    for name in iupac_names:
+    for name in product_iupac_names:
         split_name = re.split(r', (?=\S|$)', name)
         for individual_product in split_name:
             smile = cirpy.resolve(individual_product, 'smiles')
-            smile_list.append(smile)
+            product_smile_list.append(smile)
             print(individual_product, smile)
 
 
@@ -32,13 +32,9 @@ def create_db(photo_df, enzyme_df, reaction_df):
     cursor = conn.cursor()
 
     enzyme_df.to_sql("enzyme_table", conn, if_exists = "replace", index = True)
-    print("enzyme table made in",photo_db)
-
     reaction_df.to_sql("reactions_table", conn, if_exists = "replace", index = True)
-    print("reactions table made in", photo_db)
 
     conn.close()
-    print("DB connection to", photo_db, "is closed")
 
     return photo_db
 
@@ -49,12 +45,12 @@ def verify_db(photo_db):
     tables = cursor_verify.fetchall()
     print("Tables in", photo_db, ":", tables)
 
-    print("Data table from enzyme table")
     df_from_enzyme_table = pd.read_sql_query("SELECT * FROM enzyme_table", conn_verify)
+    print("Data table from enzyme table")
     print(df_from_enzyme_table.columns)
 
-    print("Data table from reactions table")
     df_from_reactions_table = pd.read_sql_query("SELECT * FROM reactions_table", conn_verify)
+    print("Data table from reactions table")
     print(df_from_reactions_table.columns)
 
     conn_verify.close()
